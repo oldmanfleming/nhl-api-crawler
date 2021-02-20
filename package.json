@@ -1,0 +1,19 @@
+{
+  "name": "nhl-api-crawler",
+  "version": "1.0.0",
+  "description": "A package for crawling the NHL's APIs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eflem00/nhl-api-crawler.git"
+  },
+  "author": "Evan Fleming",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/eflem00/nhl-api-crawler/issues"
+  },
+  "homepage": "https://github.com/eflem00/nhl-api-crawler#readme"
+}
