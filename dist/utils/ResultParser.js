@@ -26,7 +26,9 @@ function getResult(gamePk, gameEvents, gameShifts, teamSummary, opposingTeamSumm
     result.teamId = teamSummary.teamId;
     result.opposingTeamId = opposingTeamSummary.teamId;
     result.teamScore = isHome ? gameEvents.data.liveData.linescore.teams.home.goals : gameEvents.data.liveData.linescore.teams.away.goals;
-    result.opposingTeamScore = isHome ? gameEvents.data.liveData.linescore.teams.away.goals : gameEvents.data.liveData.linescore.teams.home.goals;
+    result.opposingTeamScore = isHome
+        ? gameEvents.data.liveData.linescore.teams.away.goals
+        : gameEvents.data.liveData.linescore.teams.home.goals;
     result.points = teamSummary.points;
     if (teamSummary.wins) {
         result.resultType = Result_1.ResultType.Win;

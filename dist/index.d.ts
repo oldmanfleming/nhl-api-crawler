@@ -5,8 +5,6 @@ import { Event } from './entities/Event';
 import { Result } from './entities/Result';
 export declare const crawlTeams: () => Promise<Team[]>;
 export declare const crawlPlayers: (startYear: string, endYear: string) => Promise<Player[]>;
-export declare const crawlGames: (startDate: string, endDate: string) => Promise<{
-    events: Event[];
-    results: Result[];
-    shifts: Shift[];
-}[] | undefined>;
+export declare const crawlEvents: (startDate: string, endDate: string) => Promise<Event[]>;
+export declare const crawlShifts: (startDate: string, endDate: string) => Promise<Shift[]>;
+export declare const crawlResults: (startDate: string, endDate: string) => Promise<Result[]>;

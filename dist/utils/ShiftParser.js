@@ -118,7 +118,10 @@ function getShifts(gameShifts, gameEvents) {
             awayScore += 1;
         }
         //strength/score change, complete shifts for players in map and remove
-        if (homeOnIceStrength !== prevHomeOnIceStrength || awayOnIceStrength !== prevAwayOnIceStrength || homeGoals.has(tick) || awayGoals.has(tick)) {
+        if (homeOnIceStrength !== prevHomeOnIceStrength ||
+            awayOnIceStrength !== prevAwayOnIceStrength ||
+            homeGoals.has(tick) ||
+            awayGoals.has(tick)) {
             try {
                 for (var _q = (e_3 = void 0, __values(__spread(homePlayerShifts.values()))), _r = _q.next(); !_r.done; _r = _q.next()) {
                     var shift = _r.value;

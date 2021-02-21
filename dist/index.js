@@ -50,19 +50,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.crawlGames = exports.crawlPlayers = exports.crawlTeams = void 0;
+exports.crawlResults = exports.crawlShifts = exports.crawlEvents = exports.crawlPlayers = exports.crawlTeams = void 0;
 var joi_1 = require("joi");
 var axios_1 = __importDefault(require("axios"));
 var ResultParser_1 = require("./utils/ResultParser");
 var EventParser_1 = require("./utils/EventParser");
-var EventConstructor_1 = require("./utils/EventConstructor");
 var ShiftParser_1 = require("./utils/ShiftParser");
-var Constants_1 = require("./utils/Constants");
 var crawlTeams = function () { return __awaiter(void 0, void 0, void 0, function () {
     var teams, teamProfiles, i, teamData, team;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
+                console.log('Beginning team crawl');
                 teams = [];
                 return [4 /*yield*/, axios_1.default("http://statsapi.web.nhl.com/api/v1/teams")];
             case 1:
@@ -84,6 +83,7 @@ var crawlTeams = function () { return __awaiter(void 0, void 0, void 0, function
                     };
                     teams.push(team);
                 }
+                console.log('Finished team crawl');
                 return [2 /*return*/, teams];
         }
     });
@@ -99,6 +99,7 @@ var crawlPlayers = function (startYear, endYear) { return __awaiter(void 0, void
                     startYear: joi_1.string().length(8).alphanum().required(),
                     endYear: joi_1.string().length(8).alphanum().required(),
                 }));
+                console.log('Beginning player crawl');
                 playerIdSet = new Set();
                 return [4 /*yield*/, axios_1.default("https://api.nhle.com/stats/rest/en/skater/summary?cayenneExp=seasonId>=" + startYear + "%20and%20seasonId<=" + endYear)];
             case 1:
@@ -107,7 +108,6 @@ var crawlPlayers = function (startYear, endYear) { return __awaiter(void 0, void
                 _h.label = 2;
             case 2:
                 if (!(i < countRequest.data.total)) return [3 /*break*/, 5];
-                console.log("fetching " + i);
                 return [4 /*yield*/, axios_1.default("https://api.nhle.com/stats/rest/en/skater/summary?start=" + i + "&limit=" + 100 + "&cayenneExp=seasonId>=" + startYear + "%20and%20seasonId<=" + endYear)];
             case 3:
                 playerList = _h.sent();
@@ -135,7 +135,6 @@ var crawlPlayers = function (startYear, endYear) { return __awaiter(void 0, void
                 _h.label = 7;
             case 7:
                 if (!(i < countRequest.data.total)) return [3 /*break*/, 10];
-                console.log("fetching " + i);
                 return [4 /*yield*/, axios_1.default("https://api.nhle.com/stats/rest/en/goalie/summary?start=" + i + "&limit=" + 100 + "&cayenneExp=seasonId>=" + startYear + "%20and%20seasonId<=" + endYear)];
             case 8:
                 playerList = _h.sent();
@@ -166,7 +165,7 @@ var crawlPlayers = function (startYear, endYear) { return __awaiter(void 0, void
             case 12:
                 if (!!playerIdSet_1_1.done) return [3 /*break*/, 15];
                 playerId = playerIdSet_1_1.value;
-                console.log("fetching " + playerId);
+                console.log("fetching player " + playerId);
                 return [4 /*yield*/, axios_1.default("https://statsapi.web.nhl.com/api/v1/people/" + playerId + "?expand=person")];
             case 13:
                 playerProfile = _h.sent();
@@ -208,90 +207,236 @@ var crawlPlayers = function (startYear, endYear) { return __awaiter(void 0, void
                 }
                 finally { if (e_1) throw e_1.error; }
                 return [7 /*endfinally*/];
-            case 18: return [2 /*return*/, playerProfiles];
+            case 18:
+                console.log('finished player crawl');
+                return [2 /*return*/, playerProfiles];
         }
     });
 }); };
 exports.crawlPlayers = crawlPlayers;
-var crawlGames = function (startDate, endDate) { return __awaiter(void 0, void 0, void 0, function () {
-    var startDateTime, endDateTime, date, schedule, games, gameResults, games_1, games_1_1, game, gamePk, gameEvents, gameShifts, gameSummaries, events, results, shifts, e_4_1;
+var crawlEvents = function (startDate, endDate) { return __awaiter(void 0, void 0, void 0, function () {
+    var gamePks, events, gamePks_1, gamePks_1_1, gamePk, gameEvents, gameShifts, eventsByGame, e_4_1;
     var e_4, _a;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                joi_1.assert({ startDate: startDate, endDate: endDate }, joi_1.object({
-                    startDate: joi_1.string().required(),
-                    endDate: joi_1.string().required(),
-                }));
-                startDateTime = new Date(startDate + "T12:00:00.000Z");
-                endDateTime = new Date(endDate + "T12:00:00.000Z");
-                date = startDateTime;
-                _b.label = 1;
+                console.log('Beginning event crawl');
+                return [4 /*yield*/, crawlGames(startDate, endDate)];
             case 1:
-                if (!(date <= endDateTime)) return [3 /*break*/, 14];
-                console.log("beginning date " + date.toISOString().split('T')[0]);
-                return [4 /*yield*/, axios_1.default("https://statsapi.web.nhl.com/api/v1/schedule?date=" + date.toISOString().split('T')[0])];
+                gamePks = _b.sent();
+                events = [];
+                _b.label = 2;
             case 2:
-                schedule = _b.sent();
-                if (!schedule.data.dates.length) {
-                    console.log("no games found for " + date.toISOString());
-                    return [3 /*break*/, 13];
-                }
-                games = schedule.data.dates[0].games.filter(function (game) { return game.gameType !== Constants_1.GameType.AllStarGameType && game.gameType !== Constants_1.GameType.PreSeasonGameType; });
-                gameResults = [];
+                _b.trys.push([2, 8, 9, 10]);
+                gamePks_1 = __values(gamePks), gamePks_1_1 = gamePks_1.next();
                 _b.label = 3;
             case 3:
-                _b.trys.push([3, 10, 11, 12]);
-                games_1 = (e_4 = void 0, __values(games)), games_1_1 = games_1.next();
-                _b.label = 4;
-            case 4:
-                if (!!games_1_1.done) return [3 /*break*/, 9];
-                game = games_1_1.value;
-                gamePk = game.gamePk;
+                if (!!gamePks_1_1.done) return [3 /*break*/, 7];
+                gamePk = gamePks_1_1.value;
                 console.log("Beginning game " + gamePk);
                 return [4 /*yield*/, axios_1.default("https://statsapi.web.nhl.com/api/v1/game/" + gamePk + "/feed/live")];
-            case 5:
+            case 4:
                 gameEvents = _b.sent();
                 return [4 /*yield*/, axios_1.default("https://api.nhle.com/stats/rest/en/shiftcharts?cayenneExp=gameId=" + gamePk)];
-            case 6:
+            case 5:
                 gameShifts = _b.sent();
-                return [4 /*yield*/, axios_1.default("https://api.nhle.com/stats/rest/en/team/summary?reportType=basic&isGame=true&reportName=teamsummary&cayenneExp=gameId=" + gamePk)];
-            case 7:
-                gameSummaries = _b.sent();
                 if (gameEvents.data.gameData.status.abstractGameState !== 'Final') {
-                    throw new Error('Game state not final yet');
+                    console.error("Game state not final for game " + gamePk + " - skipping game...");
+                    return [3 /*break*/, 6];
                 }
                 if (!gameShifts.data.data.length) {
-                    throw new Error('Game shifts not found');
+                    console.error("Game shifts not found for game " + gamePk + " - skipping game...");
+                    return [3 /*break*/, 6];
                 }
-                if (!gameSummaries.data.data.length) {
-                    throw new Error('Game summaries not found');
+                if (!gameEvents.data.liveData.plays.allPlays.length) {
+                    console.error("Game events not found for game " + gamePk + " - skipping game...");
+                    return [3 /*break*/, 6];
                 }
-                events = gameEvents.data.liveData.plays.allPlays.length ? EventParser_1.getEvents(gamePk, gameEvents, gameShifts) : EventConstructor_1.constructEvents(gameEvents);
-                results = ResultParser_1.getResults(gamePk, gameEvents, gameSummaries, gameShifts);
-                shifts = ShiftParser_1.getShifts(gameShifts, gameEvents);
-                gameResults.push({ events: events, results: results, shifts: shifts });
-                _b.label = 8;
+                eventsByGame = EventParser_1.getEvents(gamePk, gameEvents, gameShifts);
+                events.concat(eventsByGame);
+                console.log("Finsihed game " + gamePk);
+                _b.label = 6;
+            case 6:
+                gamePks_1_1 = gamePks_1.next();
+                return [3 /*break*/, 3];
+            case 7: return [3 /*break*/, 10];
             case 8:
-                games_1_1 = games_1.next();
-                return [3 /*break*/, 4];
-            case 9: return [3 /*break*/, 12];
-            case 10:
                 e_4_1 = _b.sent();
                 e_4 = { error: e_4_1 };
-                return [3 /*break*/, 12];
-            case 11:
+                return [3 /*break*/, 10];
+            case 9:
                 try {
-                    if (games_1_1 && !games_1_1.done && (_a = games_1.return)) _a.call(games_1);
+                    if (gamePks_1_1 && !gamePks_1_1.done && (_a = gamePks_1.return)) _a.call(gamePks_1);
                 }
                 finally { if (e_4) throw e_4.error; }
                 return [7 /*endfinally*/];
-            case 12: return [2 /*return*/, gameResults];
-            case 13:
-                date.setDate(date.getDate() + 1);
-                return [3 /*break*/, 1];
-            case 14: return [2 /*return*/];
+            case 10:
+                console.log('Finished event crawl');
+                return [2 /*return*/, events];
         }
     });
 }); };
-exports.crawlGames = crawlGames;
+exports.crawlEvents = crawlEvents;
+var crawlShifts = function (startDate, endDate) { return __awaiter(void 0, void 0, void 0, function () {
+    var gamePks, shifts, gamePks_2, gamePks_2_1, gamePk, gameEvents, gameShifts, shiftsByGame, e_5_1;
+    var e_5, _a;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                console.log('Beginning shift crawl');
+                return [4 /*yield*/, crawlGames(startDate, endDate)];
+            case 1:
+                gamePks = _b.sent();
+                shifts = [];
+                _b.label = 2;
+            case 2:
+                _b.trys.push([2, 8, 9, 10]);
+                gamePks_2 = __values(gamePks), gamePks_2_1 = gamePks_2.next();
+                _b.label = 3;
+            case 3:
+                if (!!gamePks_2_1.done) return [3 /*break*/, 7];
+                gamePk = gamePks_2_1.value;
+                console.log("Beginning game " + gamePk);
+                return [4 /*yield*/, axios_1.default("https://statsapi.web.nhl.com/api/v1/game/" + gamePk + "/feed/live")];
+            case 4:
+                gameEvents = _b.sent();
+                return [4 /*yield*/, axios_1.default("https://api.nhle.com/stats/rest/en/shiftcharts?cayenneExp=gameId=" + gamePk)];
+            case 5:
+                gameShifts = _b.sent();
+                if (gameEvents.data.gameData.status.abstractGameState !== 'Final') {
+                    console.error("Game state not final for game " + gamePk + " - skipping game...");
+                    return [3 /*break*/, 6];
+                }
+                if (!gameShifts.data.data.length) {
+                    console.error("Game shifts not found for game " + gamePk + " - skipping game...");
+                    return [3 /*break*/, 6];
+                }
+                if (!gameEvents.data.liveData.plays.allPlays.length) {
+                    console.error("Game events not found for game " + gamePk + " - skipping game...");
+                    return [3 /*break*/, 6];
+                }
+                shiftsByGame = ShiftParser_1.getShifts(gameShifts, gameEvents);
+                shifts.concat(shiftsByGame);
+                console.log("Finsihed game " + gamePk);
+                _b.label = 6;
+            case 6:
+                gamePks_2_1 = gamePks_2.next();
+                return [3 /*break*/, 3];
+            case 7: return [3 /*break*/, 10];
+            case 8:
+                e_5_1 = _b.sent();
+                e_5 = { error: e_5_1 };
+                return [3 /*break*/, 10];
+            case 9:
+                try {
+                    if (gamePks_2_1 && !gamePks_2_1.done && (_a = gamePks_2.return)) _a.call(gamePks_2);
+                }
+                finally { if (e_5) throw e_5.error; }
+                return [7 /*endfinally*/];
+            case 10:
+                console.log('Finished shift crawl');
+                return [2 /*return*/, shifts];
+        }
+    });
+}); };
+exports.crawlShifts = crawlShifts;
+var crawlResults = function (startDate, endDate) { return __awaiter(void 0, void 0, void 0, function () {
+    var gamePks, results, gamePks_3, gamePks_3_1, gamePk, gameEvents, gameShifts, gameSummaries, resultsByGame, e_6_1;
+    var e_6, _a;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                console.log('Beginning result crawl');
+                return [4 /*yield*/, crawlGames(startDate, endDate)];
+            case 1:
+                gamePks = _b.sent();
+                results = [];
+                _b.label = 2;
+            case 2:
+                _b.trys.push([2, 9, 10, 11]);
+                gamePks_3 = __values(gamePks), gamePks_3_1 = gamePks_3.next();
+                _b.label = 3;
+            case 3:
+                if (!!gamePks_3_1.done) return [3 /*break*/, 8];
+                gamePk = gamePks_3_1.value;
+                console.log("Beginning game " + gamePk);
+                return [4 /*yield*/, axios_1.default("https://statsapi.web.nhl.com/api/v1/game/" + gamePk + "/feed/live")];
+            case 4:
+                gameEvents = _b.sent();
+                return [4 /*yield*/, axios_1.default("https://api.nhle.com/stats/rest/en/shiftcharts?cayenneExp=gameId=" + gamePk)];
+            case 5:
+                gameShifts = _b.sent();
+                return [4 /*yield*/, axios_1.default("https://api.nhle.com/stats/rest/en/team/summary?reportType=basic&isGame=true&reportName=teamsummary&cayenneExp=gameId=" + gamePk)];
+            case 6:
+                gameSummaries = _b.sent();
+                if (gameEvents.data.gameData.status.abstractGameState !== 'Final') {
+                    console.error("Game state not final for game " + gamePk + " - skipping game...");
+                    return [3 /*break*/, 7];
+                }
+                if (!gameShifts.data.data.length) {
+                    console.error("Game shifts not found for game " + gamePk + " - skipping game...");
+                    return [3 /*break*/, 7];
+                }
+                if (!gameEvents.data.liveData.plays.allPlays.length) {
+                    console.error("Game events not found for game " + gamePk + " - skipping game...");
+                    return [3 /*break*/, 7];
+                }
+                resultsByGame = ResultParser_1.getResults(gamePk, gameEvents, gameSummaries, gameShifts);
+                results.concat(resultsByGame);
+                console.log("Finsihed game " + gamePk);
+                _b.label = 7;
+            case 7:
+                gamePks_3_1 = gamePks_3.next();
+                return [3 /*break*/, 3];
+            case 8: return [3 /*break*/, 11];
+            case 9:
+                e_6_1 = _b.sent();
+                e_6 = { error: e_6_1 };
+                return [3 /*break*/, 11];
+            case 10:
+                try {
+                    if (gamePks_3_1 && !gamePks_3_1.done && (_a = gamePks_3.return)) _a.call(gamePks_3);
+                }
+                finally { if (e_6) throw e_6.error; }
+                return [7 /*endfinally*/];
+            case 11:
+                console.log('Finished result crawl');
+                return [2 /*return*/, results];
+        }
+    });
+}); };
+exports.crawlResults = crawlResults;
+var crawlGames = function (startDate, endDate) { return __awaiter(void 0, void 0, void 0, function () {
+    var startDateTime, endDateTime, gamePks, date_1, schedule, gamePksForDate;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                joi_1.assert({ startDate: startDate, endDate: endDate }, joi_1.object({
+                    startDate: joi_1.date().required(),
+                    endDate: joi_1.date().required(),
+                }));
+                startDateTime = new Date(startDate + "T12:00:00.000Z");
+                endDateTime = new Date(endDate + "T12:00:00.000Z");
+                gamePks = [];
+                date_1 = startDateTime;
+                _a.label = 1;
+            case 1:
+                if (!(date_1 <= endDateTime)) return [3 /*break*/, 4];
+                return [4 /*yield*/, axios_1.default("https://statsapi.web.nhl.com/api/v1/schedule?date=" + date_1.toISOString().split('T')[0])];
+            case 2:
+                schedule = _a.sent();
+                if (!schedule.data.dates.length) {
+                    return [3 /*break*/, 3];
+                }
+                gamePksForDate = schedule.data.dates[0].games.map(function (game) { return game.gamePk; });
+                gamePks.concat(gamePksForDate);
+                _a.label = 3;
+            case 3:
+                date_1.setDate(date_1.getDate() + 1);
+                return [3 /*break*/, 1];
+            case 4:
+                console.log(gamePks.length + " games found between " + startDate + " and " + endDate);
+                return [2 /*return*/, gamePks];
+        }
+    });
+}); };

@@ -44,7 +44,7 @@ function parseBoxScore(gamePk, gameType, timestamp, team, isHome, opposingTeamId
             teamId: team.team.id,
             opposingTeamId: opposingTeamId,
             teamScore: 0,
-            opposingTeamScore: 0
+            opposingTeamScore: 0,
         });
         if (playerStats.goalieStats) {
             var goalieStats = playerStats.goalieStats;
