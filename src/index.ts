@@ -142,7 +142,7 @@ export const crawlEvents = async (startDate: string, endDate: string) => {
     }
 
     const eventsByGame: Event[] = getEvents(gamePk, gameEvents, gameShifts)
-    events.concat(eventsByGame)
+    events.push(...eventsByGame)
 
     console.log(`Finsihed game ${gamePk}`)
   }
@@ -180,7 +180,7 @@ export const crawlShifts = async (startDate: string, endDate: string) => {
     }
 
     const shiftsByGame: Shift[] = getShifts(gameShifts, gameEvents)
-    shifts.concat(shiftsByGame)
+    shifts.push(...shiftsByGame)
 
     console.log(`Finsihed game ${gamePk}`)
   }
@@ -221,7 +221,7 @@ export const crawlResults = async (startDate: string, endDate: string) => {
     }
 
     const resultsByGame: Result[] = getResults(gamePk, gameEvents, gameSummaries, gameShifts)
-    results.concat(resultsByGame)
+    results.push(...resultsByGame)
 
     console.log(`Finsihed game ${gamePk}`)
   }
@@ -244,7 +244,7 @@ const crawlGames = async (startDate: string, endDate: string) => {
   const startDateTime: Date = new Date(`${startDate}T12:00:00.000Z`)
   const endDateTime: Date = new Date(`${endDate}T12:00:00.000Z`)
 
-  const gamePks: number[] = []
+  let gamePks: number[] = []
   for (const date: Date = startDateTime; date <= endDateTime; date.setDate(date.getDate() + 1)) {
     const schedule: any = await request(`https://statsapi.web.nhl.com/api/v1/schedule?date=${date.toISOString().split('T')[0]}`)
 
@@ -253,7 +253,7 @@ const crawlGames = async (startDate: string, endDate: string) => {
     }
 
     const gamePksForDate = schedule.data.dates[0].games.map((game: any) => game.gamePk)
-    gamePks.concat(gamePksForDate)
+    gamePks.push(...gamePksForDate)
   }
 
   console.log(`${gamePks.length} games found between ${startDate} and ${endDate}`)

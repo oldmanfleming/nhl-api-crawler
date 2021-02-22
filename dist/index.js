@@ -46,6 +46,26 @@ var __values = (this && this.__values) || function(o) {
     };
     throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
+var __spread = (this && this.__spread) || function () {
+    for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
+    return ar;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -253,7 +273,7 @@ var crawlEvents = function (startDate, endDate) { return __awaiter(void 0, void 
                     return [3 /*break*/, 6];
                 }
                 eventsByGame = EventParser_1.getEvents(gamePk, gameEvents, gameShifts);
-                events.concat(eventsByGame);
+                events.push.apply(events, __spread(eventsByGame));
                 console.log("Finsihed game " + gamePk);
                 _b.label = 6;
             case 6:
@@ -316,7 +336,7 @@ var crawlShifts = function (startDate, endDate) { return __awaiter(void 0, void 
                     return [3 /*break*/, 6];
                 }
                 shiftsByGame = ShiftParser_1.getShifts(gameShifts, gameEvents);
-                shifts.concat(shiftsByGame);
+                shifts.push.apply(shifts, __spread(shiftsByGame));
                 console.log("Finsihed game " + gamePk);
                 _b.label = 6;
             case 6:
@@ -382,7 +402,7 @@ var crawlResults = function (startDate, endDate) { return __awaiter(void 0, void
                     return [3 /*break*/, 7];
                 }
                 resultsByGame = ResultParser_1.getResults(gamePk, gameEvents, gameSummaries, gameShifts);
-                results.concat(resultsByGame);
+                results.push.apply(results, __spread(resultsByGame));
                 console.log("Finsihed game " + gamePk);
                 _b.label = 7;
             case 7:
@@ -429,7 +449,7 @@ var crawlGames = function (startDate, endDate) { return __awaiter(void 0, void 0
                     return [3 /*break*/, 3];
                 }
                 gamePksForDate = schedule.data.dates[0].games.map(function (game) { return game.gamePk; });
-                gamePks.concat(gamePksForDate);
+                gamePks.push.apply(gamePks, __spread(gamePksForDate));
                 _a.label = 3;
             case 3:
                 date_1.setDate(date_1.getDate() + 1);
